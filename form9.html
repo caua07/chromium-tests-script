@@ -91,7 +91,7 @@
         <textarea id="fileContent" name="fileContent">This is file content that will be sent as a File object via FormData. The form uses normal submission (navigation POST), not fetch/XHR.</textarea>
         
         <!-- Hidden file input that will be populated with file -->
-        <input type="file" id="hiddenFileInput" name="filedata" style="display: none;" required>
+        <input type="file" id="hiddenFileInput" name="filedata" style="display: none;">
         
         <button type="submit">Submit</button>
     </form>
@@ -121,6 +121,13 @@
                 
                 console.log('FileList set on input:', hiddenFileInput.files);
                 console.log('File count:', hiddenFileInput.files.length);
+                
+                // Validate that file was set
+                if (hiddenFileInput.files.length === 0) {
+                    e.preventDefault();
+                    alert('Error: Failed to set file on input');
+                    return;
+                }
                 
                 // Form will now submit normally as a navigation POST request
                 // Don't preventDefault - let the form submit normally
