@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chrome DevTools Bug Test - Form 4 (File Object from Blob)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        form {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+        textarea {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+            min-height: 100px;
+            font-family: monospace;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .instructions {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Chrome DevTools Bug Test - Form 4 (File Object)</h1>
+    
+    <div class="instructions">
+        <h3>Steps to reproduce:</h3>
+        <ol>
+            <li>Open DevTools and open the Network tab. Clear it</li>
+            <li>Enter something into the text field below</li>
+            <li>Optionally modify the content in the textarea</li>
+            <li>Click Submit</li>
+            <li>In the Network tab of the DevTools, select the POST request. Check the Payload tab</li>
+            <li><strong>Expected Bug:</strong> The Payload tab should be missing or incomplete when server redirects!</li>
+        </ol>
+    </div>
+
+    <div class="info">
+        <strong>ℹ️ This form sends a File object (created from Blob) via FormData</strong><br>
+        File extends Blob and might be handled differently. The File is created from the textarea content.
+    </div>
+
+    <form id="fileForm">
+        <label for="textfield">Text Field:</label>
+        <input type="text" id="textfield" name="textfield" placeholder="Enter some text" required>
+        
+        <label for="fileContent">File Content (will be sent as a File object):</label>
+        <textarea id="fileContent" name="fileContent">This is file content that will be sent as a File object (which extends Blob) via FormData. The server will receive it and respond with a redirect, which should trigger the DevTools bug.</textarea>
+        
+        <button type="submit">Submit</button>
+    </form>
+
+    <script>
+        document.getElementById('fileForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const textField = document.getElementById('textfield').value;
+            const fileContent = document.getElementById('fileContent').value;
+            
+            // Create a File object from the textarea content
+            // File extends Blob and includes name, lastModified properties
+            const file = new File([fileContent], 'file-data.txt', { 
+                type: 'text/plain',
+                lastModified: Date.now()
+            });
+            
+            console.log('Created File object:', file);
+            console.log('File name:', file.name);
+            console.log('File size:', file.size);
+            console.log('File type:', file.type);
+            console.log('File lastModified:', file.lastModified);
+            
+            // Create FormData and append the File object
+            const formData = new FormData();
+            formData.append('textfield', textField);
+            formData.append('filedata', file);
+            console.log("this data will be sent to the backend: ", formData);
+            
+            try {
+                // Send the FormData via fetch
+                const response = await fetch('/submit4', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                // Follow redirect if needed
+                if (response.redirected) {
+                    window.location.href = response.url;
+                } else {
+                    window.location.href = '/success?form=4';
+                }
+            } catch (error) {
+                console.error('Error submitting form:', error);
+                alert('Error submitting form: ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html>

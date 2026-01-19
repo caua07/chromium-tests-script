@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chrome DevTools Bug Test - Form 5 (DataTransfer/FileList)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        form {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+        input[type="file"] {
+            margin-bottom: 15px;
+        }
+        textarea {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+            min-height: 100px;
+            font-family: monospace;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .instructions {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Chrome DevTools Bug Test - Form 5 (DataTransfer/FileList)</h1>
+    
+    <div class="instructions">
+        <h3>Steps to reproduce:</h3>
+        <ol>
+            <li>Open DevTools and open the Network tab. Clear it</li>
+            <li>Enter something into the text field below</li>
+            <li>Optionally modify the content in the textarea</li>
+            <li>Click Submit</li>
+            <li>In the Network tab of the DevTools, select the POST request. Check the Payload tab</li>
+            <li><strong>Expected Bug:</strong> The Payload tab should be missing or incomplete when server redirects!</li>
+        </ol>
+    </div>
+
+    <div class="info">
+        <strong>ℹ️ This form uses DataTransfer API to create a FileList and set it on a file input</strong><br>
+        The file input is programmatically populated with a File object created from the textarea content, then the form is submitted normally.
+    </div>
+
+    <form id="dataTransferForm" action="/submit5" method="POST" enctype="multipart/form-data">
+        <label for="textfield">Text Field:</label>
+        <input type="text" id="textfield" name="textfield" placeholder="Enter some text" required>
+        
+        <label for="fileInput">File (programmatically set):</label>
+        <input type="file" id="fileInput" name="filedata" required>
+        
+        <label for="fileContent">File Content (will be converted to File and set on input):</label>
+        <textarea id="fileContent" name="fileContent">This is file content that will be converted to a File object, then set on the file input using DataTransfer API, and submitted via normal form submission.</textarea>
+        
+        <button type="submit">Submit</button>
+    </form>
+
+    <script>
+        document.getElementById('dataTransferForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const textField = document.getElementById('textfield').value;
+            const fileContent = document.getElementById('fileContent').value;
+            const fileInput = document.getElementById('fileInput');
+            
+            // Create a File object from the textarea content
+            const file = new File([fileContent], 'data-transfer-file.txt', { 
+                type: 'text/plain',
+                lastModified: Date.now()
+            });
+            
+            console.log('Created File object:', file);
+            
+            // Use DataTransfer API to create a FileList and set it on the input
+            try {
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                fileInput.files = dataTransfer.files;
+                
+                console.log('FileList set on input:', fileInput.files);
+                console.log('File count:', fileInput.files.length);
+                console.log('File name:', fileInput.files[0]?.name);
+                
+                // Now submit the form normally
+                // Create a new form submission with the updated file input
+                const form = document.getElementById('dataTransferForm');
+                const formData = new FormData(form);
+                
+                console.log("FormData will be sent to the backend");
+                console.log("Text field:", formData.get('textfield'));
+                console.log("File:", formData.get('filedata'));
+                
+                // Submit via fetch to maintain control
+                fetch('/submit5', {
+                    method: 'POST',
+                    body: formData
+                }).then(response => {
+                    if (response.redirected) {
+                        window.location.href = response.url;
+                    } else {
+                        window.location.href = '/success?form=5';
+                    }
+                }).catch(error => {
+                    console.error('Error submitting form:', error);
+                    alert('Error submitting form: ' + error.message);
+                });
+            } catch (error) {
+                console.error('Error setting file on input:', error);
+                alert('Error: ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html>
