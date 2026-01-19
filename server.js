@@ -85,6 +85,104 @@ app.post('/submit5', upload.single('filedata'), (req, res) => {
     res.redirect('/success?form=5');
 });
 
+// Route for form 6 - handles blob data but does NOT redirect (for comparison)
+app.post('/submit6', upload.single('blobdata'), (req, res) => {
+    console.log('Form 6 submitted (Blob data - NO REDIRECT):');
+    console.log('Text field:', req.body.textfield);
+    if (req.file) {
+        console.log('Blob received:');
+        console.log('  - Original name:', req.file.originalname);
+        console.log('  - MIME type:', req.file.mimetype);
+        console.log('  - Size:', req.file.size, 'bytes');
+        console.log('  - Saved to:', req.file.path);
+    } else {
+        console.log('Blob: No blob data received');
+    }
+    
+    // Respond with JSON (NO REDIRECT - Payload tab should be visible)
+    res.json({
+        success: true,
+        form: 6,
+        message: 'Blob data received successfully (no redirect)',
+        data: {
+            textfield: req.body.textfield,
+            blob: req.file ? {
+                originalname: req.file.originalname,
+                mimetype: req.file.mimetype,
+                size: req.file.size
+            } : null
+        }
+    });
+});
+
+// Route for form 7 - handles File object data but does NOT redirect (for comparison)
+app.post('/submit7', upload.single('filedata'), (req, res) => {
+    console.log('Form 7 submitted (File object data - NO REDIRECT):');
+    console.log('Text field:', req.body.textfield);
+    if (req.file) {
+        console.log('File received:');
+        console.log('  - Original name:', req.file.originalname);
+        console.log('  - MIME type:', req.file.mimetype);
+        console.log('  - Size:', req.file.size, 'bytes');
+        console.log('  - Saved to:', req.file.path);
+    } else {
+        console.log('File: No file data received');
+    }
+    
+    // Respond with JSON (NO REDIRECT - Payload tab should be visible)
+    res.json({
+        success: true,
+        form: 7,
+        message: 'File data received successfully (no redirect)',
+        data: {
+            textfield: req.body.textfield,
+            file: req.file ? {
+                originalname: req.file.originalname,
+                mimetype: req.file.mimetype,
+                size: req.file.size
+            } : null
+        }
+    });
+});
+
+// Route for form 8 - handles blob data via navigation POST and redirects
+app.post('/submit8', upload.single('blobdata'), (req, res) => {
+    console.log('Form 8 submitted (Blob data - Navigation POST):');
+    console.log('Text field:', req.body.textfield);
+    if (req.file) {
+        console.log('Blob received:');
+        console.log('  - Original name:', req.file.originalname);
+        console.log('  - MIME type:', req.file.mimetype);
+        console.log('  - Size:', req.file.size, 'bytes');
+        console.log('  - Saved to:', req.file.path);
+    } else {
+        console.log('Blob: No blob data received');
+    }
+    
+    // Respond with a redirect (this triggers the bug - Payload tab disappears)
+    // This is a navigation POST request, so redirect happens in same request/response
+    res.redirect('/success?form=8');
+});
+
+// Route for form 9 - handles File object data via navigation POST and redirects
+app.post('/submit9', upload.single('filedata'), (req, res) => {
+    console.log('Form 9 submitted (File object data - Navigation POST):');
+    console.log('Text field:', req.body.textfield);
+    if (req.file) {
+        console.log('File received:');
+        console.log('  - Original name:', req.file.originalname);
+        console.log('  - MIME type:', req.file.mimetype);
+        console.log('  - Size:', req.file.size, 'bytes');
+        console.log('  - Saved to:', req.file.path);
+    } else {
+        console.log('File: No file data received');
+    }
+    
+    // Respond with a redirect (this triggers the bug - Payload tab disappears)
+    // This is a navigation POST request, so redirect happens in same request/response
+    res.redirect('/success?form=9');
+});
+
 // Success page
 app.get('/success', (req, res) => {
     const formNum = req.query.form || 'unknown';
@@ -129,7 +227,11 @@ app.get('/success', (req, res) => {
                 <a href="/form2.html">Test Form 2</a> |
                 <a href="/form3.html">Test Form 3 (Blob)</a> |
                 <a href="/form4.html">Test Form 4 (File)</a> |
-                <a href="/form5.html">Test Form 5 (DataTransfer)</a>
+                <a href="/form5.html">Test Form 5 (DataTransfer)</a> |
+                <a href="/form6.html">Test Form 6 (Blob - No Redirect)</a> |
+                <a href="/form7.html">Test Form 7 (File - No Redirect)</a> |
+                <a href="/form8.html">Test Form 8 (Blob - Nav POST)</a> |
+                <a href="/form9.html">Test Form 9 (File - Nav POST)</a>
             </p>
         </body>
         </html>
@@ -212,6 +314,30 @@ app.get('/', (req, res) => {
                 <p>Tests with FileList created via DataTransfer API and set on file input</p>
                 <a href="/form5.html">Test Form 5</a>
             </div>
+            
+            <div class="card" style="border: 2px solid #28a745;">
+                <h2>Form 6 (Blob - No Redirect) ✅</h2>
+                <p>Tests with blob data but NO redirect - Payload tab should be visible</p>
+                <a href="/form6.html">Test Form 6</a>
+            </div>
+            
+            <div class="card" style="border: 2px solid #28a745;">
+                <h2>Form 7 (File - No Redirect) ✅</h2>
+                <p>Tests with File object but NO redirect - Payload tab should be visible</p>
+                <a href="/form7.html">Test Form 7</a>
+            </div>
+            
+            <div class="card" style="border: 2px solid #dc3545;">
+                <h2>Form 8 (Blob - Navigation POST) 🚀</h2>
+                <p>Navigation POST request (not fetch/XHR) - sends data and redirects in same request</p>
+                <a href="/form8.html">Test Form 8</a>
+            </div>
+            
+            <div class="card" style="border: 2px solid #dc3545;">
+                <h2>Form 9 (File - Navigation POST) 🚀</h2>
+                <p>Navigation POST request (not fetch/XHR) - sends data and redirects in same request</p>
+                <a href="/form9.html">Test Form 9</a>
+            </div>
         </body>
         </html>
     `);
@@ -219,12 +345,17 @@ app.get('/', (req, res) => {
 
 app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
-    console.log(`\nTest pages:`);
+    console.log(`\nTest pages (WITH REDIRECT - triggers bug):`);
     console.log(`  Form 1: http://localhost:${PORT}/form.html`);
     console.log(`  Form 2: http://localhost:${PORT}/form2.html`);
-    console.log(`  Form 3 (Blob): http://localhost:${PORT}/form3.html`);
-    console.log(`  Form 4 (File): http://localhost:${PORT}/form4.html`);
-    console.log(`  Form 5 (DataTransfer): http://localhost:${PORT}/form5.html`);
+    console.log(`  Form 3 (Blob - fetch/XHR): http://localhost:${PORT}/form3.html`);
+    console.log(`  Form 4 (File - fetch/XHR): http://localhost:${PORT}/form4.html`);
+    console.log(`  Form 5 (DataTransfer - fetch/XHR): http://localhost:${PORT}/form5.html`);
+    console.log(`  Form 8 (Blob - Navigation POST): http://localhost:${PORT}/form8.html`);
+    console.log(`  Form 9 (File - Navigation POST): http://localhost:${PORT}/form9.html`);
+    console.log(`\nTest pages (NO REDIRECT - for comparison):`);
+    console.log(`  Form 6 (Blob - No Redirect): http://localhost:${PORT}/form6.html`);
+    console.log(`  Form 7 (File - No Redirect): http://localhost:${PORT}/form7.html`);
     console.log(`\nMake sure to:`);
     console.log(`  1. Open Chrome DevTools`);
     console.log(`  2. Go to Network tab`);
