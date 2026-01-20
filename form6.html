@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chrome DevTools Bug Test - Form 6 (Blob - No Redirect)</title>
+    <title>Form 6: kData + kFile + Blob - Browser Process (Navigation POST)</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -21,7 +21,7 @@
             margin-bottom: 10px;
             font-weight: bold;
         }
-        input[type="text"] {
+        input[type="text"], input[type="file"] {
             width: 100%;
             padding: 8px;
             margin-bottom: 15px;
@@ -36,7 +36,7 @@
             font-family: monospace;
         }
         button {
-            background: #28a745;
+            background: #007bff;
             color: white;
             padding: 10px 20px;
             border: none;
@@ -45,98 +45,69 @@
             font-size: 16px;
         }
         button:hover {
-            background: #218838;
+            background: #0056b3;
         }
-        .instructions {
+        .info {
             background: #d1ecf1;
             border: 1px solid #bee5eb;
             padding: 15px;
             border-radius: 4px;
             margin-bottom: 20px;
         }
-        .info {
-            background: #d4edda;
-            border: 1px solid #c3e6cb;
-            padding: 15px;
-            border-radius: 4px;
-            margin-bottom: 20px;
-            color: #155724;
-        }
-        .result {
-            background: #fff3cd;
-            border: 1px solid #ffc107;
-            padding: 15px;
-            border-radius: 4px;
-            margin-top: 20px;
-        }
     </style>
 </head>
 <body>
-    <h1>Chrome DevTools Bug Test - Form 6 (Blob - No Redirect)</h1>
+    <h1>Form 6: kData + kFile + Blob - Browser Process</h1>
     
-    <div class="instructions">
-        <h3>Steps to test (NO REDIRECT - Payload should be visible):</h3>
-        <ol>
-            <li>Open DevTools and open the Network tab. Clear it</li>
-            <li>Enter something into the text field below</li>
-            <li>Optionally modify the blob content in the textarea</li>
-            <li>Click Submit</li>
-            <li>In the Network tab of the DevTools, select the POST request. Check the Payload tab</li>
-            <li><strong>Expected:</strong> The Payload tab SHOULD BE VISIBLE (no redirect = no bug)</li>
-        </ol>
-    </div>
-
     <div class="info">
-        <strong>ℹ️ This form sends blob data but server does NOT redirect</strong><br>
-        Compare this with Form 3 (which redirects) to see the difference in DevTools Payload tab visibility.
+        <strong>Browser Process (Navigation POST)</strong><br>
+        Sends text data (kData) + file input (kFile) + blob data via normal form submission. Observed by browser process, redirect in same request/response.
     </div>
 
-    <form id="blobFormNoRedirect">
+    <form id="form6" action="/submit6" method="POST" enctype="multipart/form-data">
         <label for="textfield">Text Field:</label>
         <input type="text" id="textfield" name="textfield" placeholder="Enter some text" required>
         
-        <label for="blobContent">Blob Content (will be sent as a blob):</label>
-        <textarea id="blobContent" name="blobContent">This is blob data content that will be sent as a Blob object via FormData. The server will respond with JSON (no redirect), so the Payload tab should be visible.</textarea>
+        <label for="file">File Upload:</label>
+        <input type="file" id="file" name="file" required>
+        
+        <label for="blobContent">Blob Content:</label>
+        <textarea id="blobContent" name="blobContent">This is blob data that will be sent along with the file input.</textarea>
+        
+        <!-- Hidden file input for blob -->
+        <input type="file" id="hiddenBlobInput" name="blobdata" style="display: none;">
         
         <button type="submit">Submit</button>
     </form>
 
-    <div id="result" class="result" style="display: none;"></div>
-
     <script>
-        document.getElementById('blobFormNoRedirect').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const textField = document.getElementById('textfield').value;
+        document.getElementById('form6').addEventListener('submit', function(e) {
             const blobContent = document.getElementById('blobContent').value;
+            const hiddenBlobInput = document.getElementById('hiddenBlobInput');
             
-            // Create a Blob from the textarea content
+            // Create blob from textarea and set on hidden input
             const blob = new Blob([blobContent], { type: 'text/plain' });
-            
-            // Create FormData and append the blob
-            const formData = new FormData();
-            formData.append('textfield', textField);
-            formData.append('blobdata', blob, 'blob-data.txt');
-            console.log("this data will be sent to the backend: ", formData);
+            const file = new File([blob], 'blob-data.txt', { 
+                type: 'text/plain',
+                lastModified: Date.now()
+            });
             
             try {
-                // Send the FormData via fetch
-                const response = await fetch('/submit6', {
-                    method: 'POST',
-                    body: formData
-                });
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                hiddenBlobInput.files = dataTransfer.files;
                 
-                const result = await response.json();
-                document.getElementById('result').style.display = 'block';
-                document.getElementById('result').innerHTML = `
-                    <h3>✅ Success!</h3>
-                    <p><strong>Server Response:</strong></p>
-                    <pre>${JSON.stringify(result, null, 2)}</pre>
-                    <p><strong>Check DevTools Network tab:</strong> The Payload tab should be VISIBLE (no redirect = no bug)</p>
-                `;
+                if (hiddenBlobInput.files.length === 0) {
+                    e.preventDefault();
+                    alert('Error: Failed to set blob on input');
+                    return;
+                }
+                
+                // Form will submit normally as navigation POST
             } catch (error) {
-                console.error('Error submitting form:', error);
-                alert('Error submitting form: ' + error.message);
+                console.error('Error setting blob on input:', error);
+                e.preventDefault();
+                alert('Error: ' + error.message);
             }
         });
     </script>

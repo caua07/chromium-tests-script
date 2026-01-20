@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chrome DevTools Bug Test - Form 3 (Blob Data)</title>
+    <title>Form 3: kData + kFile - Renderer Process (fetch/XHR)</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -21,19 +21,11 @@
             margin-bottom: 10px;
             font-weight: bold;
         }
-        input[type="text"] {
+        input[type="text"], input[type="file"] {
             width: 100%;
             padding: 8px;
             margin-bottom: 15px;
             box-sizing: border-box;
-        }
-        textarea {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 15px;
-            box-sizing: border-box;
-            min-height: 100px;
-            font-family: monospace;
         }
         button {
             background: #007bff;
@@ -47,13 +39,6 @@
         button:hover {
             background: #0056b3;
         }
-        .instructions {
-            background: #fff3cd;
-            border: 1px solid #ffc107;
-            padding: 15px;
-            border-radius: 4px;
-            margin-bottom: 20px;
-        }
         .info {
             background: #d1ecf1;
             border: 1px solid #bee5eb;
@@ -64,67 +49,53 @@
     </style>
 </head>
 <body>
-    <h1>Chrome DevTools Bug Test - Form 3 (Blob Data)</h1>
+    <h1>Form 3: kData + kFile - Renderer Process</h1>
     
-    <div class="instructions">
-        <h3>Steps to reproduce:</h3>
-        <ol>
-            <li>Open DevTools and open the Network tab. Clear it</li>
-            <li>Enter something into the text field below</li>
-            <li>Optionally modify the blob content in the textarea</li>
-            <li>Click Submit</li>
-            <li>In the Network tab of the DevTools, select the POST request. Check the Payload tab</li>
-            <li><strong>Expected Bug:</strong> The Payload tab should be missing or incomplete when server redirects!</li>
-        </ol>
-    </div>
-
     <div class="info">
-        <strong>ℹ️ This form sends blob data via FormData</strong><br>
-        The blob is created from the textarea content and sent as multipart/form-data.
+        <strong>Renderer Process (fetch/XHR)</strong><br>
+        Sends text data (kData) + file input (kFile) via fetch(). Redirect handled in renderer process as separate GET request.
     </div>
 
-    <form id="blobForm">
+    <form id="form3">
         <label for="textfield">Text Field:</label>
         <input type="text" id="textfield" name="textfield" placeholder="Enter some text" required>
         
-        <label for="blobContent">Blob Content (will be sent as a blob):</label>
-        <textarea id="blobContent" name="blobContent">This is blob data content that will be sent as a Blob object via FormData. The server will receive it and respond with a redirect, which should trigger the DevTools bug.</textarea>
+        <label for="file">File Upload:</label>
+        <input type="file" id="file" name="file" required>
         
         <button type="submit">Submit</button>
     </form>
 
     <script>
-        document.getElementById('blobForm').addEventListener('submit', async function(e) {
+        document.getElementById('form3').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const textField = document.getElementById('textfield').value;
-            const blobContent = document.getElementById('blobContent').value;
+            const fileInput = document.getElementById('file');
             
-            // Create a Blob from the textarea content
-            const blob = new Blob([blobContent], { type: 'text/plain' });
+            if (fileInput.files.length === 0) {
+                alert('Please select a file');
+                return;
+            }
             
-            // Create FormData and append the blob
             const formData = new FormData();
             formData.append('textfield', textField);
-            formData.append('blobdata', blob, 'blob-data.txt');
-            console.log("this data will be sent to the backend: ", formData)
+            formData.append('file', fileInput.files[0]);
             
             try {
-                // Send the FormData via fetch
                 const response = await fetch('/submit3', {
                     method: 'POST',
                     body: formData
                 });
                 
-                // Follow redirect if needed
                 if (response.redirected) {
                     window.location.href = response.url;
                 } else {
                     window.location.href = '/success?form=3';
                 }
             } catch (error) {
-                console.error('Error submitting form:', error);
-                alert('Error submitting form: ' + error.message);
+                console.error('Error:', error);
+                alert('Error: ' + error.message);
             }
         });
     </script>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chrome DevTools Bug Test - Form 1</title>
+    <title>Form 1: kData Only - Renderer Process (fetch/XHR)</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -27,9 +27,6 @@
             margin-bottom: 15px;
             box-sizing: border-box;
         }
-        input[type="file"] {
-            margin-bottom: 15px;
-        }
         button {
             background: #007bff;
             color: white;
@@ -42,9 +39,9 @@
         button:hover {
             background: #0056b3;
         }
-        .instructions {
-            background: #fff3cd;
-            border: 1px solid #ffc107;
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
             padding: 15px;
             border-radius: 4px;
             margin-bottom: 20px;
@@ -52,28 +49,45 @@
     </style>
 </head>
 <body>
-    <h1>Chrome DevTools Bug Test - Form 1</h1>
+    <h1>Form 1: kData Only - Renderer Process</h1>
     
-    <div class="instructions">
-        <h3>Steps to reproduce:</h3>
-        <ol>
-            <li>Open DevTools and open the Network tab. Clear it</li>
-            <li>Enter something into the text field below</li>
-            <li>Click "Choose file" and select a file to upload</li>
-            <li>Click Submit</li>
-            <li>In the Network tab of the DevTools, select the first request. Check the Payload tab</li>
-            <li><strong>Expected Bug:</strong> The Payload tab only shows Query String Parameters but doesn't show the actual payload</li>
-        </ol>
+    <div class="info">
+        <strong>Renderer Process (fetch/XHR)</strong><br>
+        Sends only text data (kData) via fetch(). Redirect handled in renderer process as separate GET request.
     </div>
 
-    <form action="/submit" method="POST" enctype="multipart/form-data">
+    <form id="form1">
         <label for="textfield">Text Field:</label>
         <input type="text" id="textfield" name="textfield" placeholder="Enter some text" required>
         
-        <label for="file">File Upload:</label>
-        <input type="file" id="file" name="file" required>
-        
         <button type="submit">Submit</button>
     </form>
+
+    <script>
+        document.getElementById('form1').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const textField = document.getElementById('textfield').value;
+            
+            const formData = new FormData();
+            formData.append('textfield', textField);
+            
+            try {
+                const response = await fetch('/submit1', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.redirected) {
+                    window.location.href = response.url;
+                } else {
+                    window.location.href = '/success?form=1';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error: ' + error.message);
+            }
+        });
+    </script>
 </body>
 </html>

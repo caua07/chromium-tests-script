@@ -11,176 +11,70 @@ const upload = multer({ dest: 'uploads/' });
 // Serve static files (HTML forms)
 app.use(express.static(__dirname));
 
-// Route for form 1 - redirects to a success page
-app.post('/submit', upload.single('file'), (req, res) => {
-    console.log('Form 1 submitted:');
+// Form 1: kData only - Renderer Process (fetch/XHR)
+app.post('/submit1', (req, res) => {
+    console.log('Form 1 submitted (kData only - Renderer/fetch/XHR):');
     console.log('Text field:', req.body.textfield);
-    console.log('File:', req.file ? req.file.originalname : 'No file');
     
     // Respond with a redirect (this triggers the bug)
     res.redirect('/success?form=1');
 });
 
-// Route for form 2 - redirects to a success page
-app.post('/submit2', upload.single('file'), (req, res) => {
-    console.log('Form 2 submitted:');
+// Form 2: kData only - Browser Process (Navigation POST)
+app.post('/submit2', (req, res) => {
+    console.log('Form 2 submitted (kData only - Browser/Navigation POST):');
     console.log('Text field:', req.body.textfield);
-    console.log('File:', req.file ? req.file.originalname : 'No file');
     
-    // Respond with a redirect (this triggers the bug - Payload tab disappears)
+    // Respond with a redirect (this triggers the bug)
     res.redirect('/success?form=2');
 });
 
-// Route for form 3 - handles blob data and redirects
-app.post('/submit3', upload.single('blobdata'), (req, res) => {
-    console.log('Form 3 submitted (Blob data):');
+// Form 3: kData + kFile - Renderer Process (fetch/XHR)
+app.post('/submit3', upload.single('file'), (req, res) => {
+    console.log('Form 3 submitted (kData + kFile - Renderer/fetch/XHR):');
     console.log('Text field:', req.body.textfield);
-    if (req.file) {
-        console.log('Blob received:');
-        console.log('  - Original name:', req.file.originalname);
-        console.log('  - MIME type:', req.file.mimetype);
-        console.log('  - Size:', req.file.size, 'bytes');
-        console.log('  - Saved to:', req.file.path);
-    } else {
-        console.log('Blob: No blob data received');
-    }
+    console.log('File:', req.file ? req.file.originalname : 'No file');
     
-    // Respond with a redirect (this triggers the bug - Payload tab disappears)
+    // Respond with a redirect (this triggers the bug)
     res.redirect('/success?form=3');
 });
 
-// Route for form 4 - handles File object data and redirects
-app.post('/submit4', upload.single('filedata'), (req, res) => {
-    console.log('Form 4 submitted (File object data):');
+// Form 4: kData + kFile - Browser Process (Navigation POST)
+app.post('/submit4', upload.single('file'), (req, res) => {
+    console.log('Form 4 submitted (kData + kFile - Browser/Navigation POST):');
     console.log('Text field:', req.body.textfield);
-    if (req.file) {
-        console.log('File received:');
-        console.log('  - Original name:', req.file.originalname);
-        console.log('  - MIME type:', req.file.mimetype);
-        console.log('  - Size:', req.file.size, 'bytes');
-        console.log('  - Saved to:', req.file.path);
-    } else {
-        console.log('File: No file data received');
-    }
+    console.log('File:', req.file ? req.file.originalname : 'No file');
     
-    // Respond with a redirect (this triggers the bug - Payload tab disappears)
+    // Respond with a redirect (this triggers the bug)
     res.redirect('/success?form=4');
 });
 
-// Route for form 5 - handles FileList/DataTransfer data and redirects
-app.post('/submit5', upload.single('filedata'), (req, res) => {
-    console.log('Form 5 submitted (DataTransfer/FileList data):');
+// Form 5: kData + kFile + Blob - Renderer Process (fetch/XHR)
+app.post('/submit5', upload.fields([
+    { name: 'file', maxCount: 1 },
+    { name: 'blobdata', maxCount: 1 }
+]), (req, res) => {
+    console.log('Form 5 submitted (kData + kFile + Blob - Renderer/fetch/XHR):');
     console.log('Text field:', req.body.textfield);
-    if (req.file) {
-        console.log('File received:');
-        console.log('  - Original name:', req.file.originalname);
-        console.log('  - MIME type:', req.file.mimetype);
-        console.log('  - Size:', req.file.size, 'bytes');
-        console.log('  - Saved to:', req.file.path);
-    } else {
-        console.log('File: No file data received');
-    }
+    console.log('File:', req.files['file'] ? req.files['file'][0].originalname : 'No file');
+    console.log('Blob:', req.files['blobdata'] ? req.files['blobdata'][0].originalname : 'No blob');
     
-    // Respond with a redirect (this triggers the bug - Payload tab disappears)
+    // Respond with a redirect (this triggers the bug)
     res.redirect('/success?form=5');
 });
 
-// Route for form 6 - handles blob data but does NOT redirect (for comparison)
-app.post('/submit6', upload.single('blobdata'), (req, res) => {
-    console.log('Form 6 submitted (Blob data - NO REDIRECT):');
+// Form 6: kData + kFile + Blob - Browser Process (Navigation POST)
+app.post('/submit6', upload.fields([
+    { name: 'file', maxCount: 1 },
+    { name: 'blobdata', maxCount: 1 }
+]), (req, res) => {
+    console.log('Form 6 submitted (kData + kFile + Blob - Browser/Navigation POST):');
     console.log('Text field:', req.body.textfield);
-    if (req.file) {
-        console.log('Blob received:');
-        console.log('  - Original name:', req.file.originalname);
-        console.log('  - MIME type:', req.file.mimetype);
-        console.log('  - Size:', req.file.size, 'bytes');
-        console.log('  - Saved to:', req.file.path);
-    } else {
-        console.log('Blob: No blob data received');
-    }
+    console.log('File:', req.files['file'] ? req.files['file'][0].originalname : 'No file');
+    console.log('Blob:', req.files['blobdata'] ? req.files['blobdata'][0].originalname : 'No blob');
     
-    // Respond with JSON (NO REDIRECT - Payload tab should be visible)
-    res.json({
-        success: true,
-        form: 6,
-        message: 'Blob data received successfully (no redirect)',
-        data: {
-            textfield: req.body.textfield,
-            blob: req.file ? {
-                originalname: req.file.originalname,
-                mimetype: req.file.mimetype,
-                size: req.file.size
-            } : null
-        }
-    });
-});
-
-// Route for form 7 - handles File object data but does NOT redirect (for comparison)
-app.post('/submit7', upload.single('filedata'), (req, res) => {
-    console.log('Form 7 submitted (File object data - NO REDIRECT):');
-    console.log('Text field:', req.body.textfield);
-    if (req.file) {
-        console.log('File received:');
-        console.log('  - Original name:', req.file.originalname);
-        console.log('  - MIME type:', req.file.mimetype);
-        console.log('  - Size:', req.file.size, 'bytes');
-        console.log('  - Saved to:', req.file.path);
-    } else {
-        console.log('File: No file data received');
-    }
-    
-    // Respond with JSON (NO REDIRECT - Payload tab should be visible)
-    res.json({
-        success: true,
-        form: 7,
-        message: 'File data received successfully (no redirect)',
-        data: {
-            textfield: req.body.textfield,
-            file: req.file ? {
-                originalname: req.file.originalname,
-                mimetype: req.file.mimetype,
-                size: req.file.size
-            } : null
-        }
-    });
-});
-
-// Route for form 8 - handles blob data via navigation POST and redirects
-app.post('/submit8', upload.single('blobdata'), (req, res) => {
-    console.log('Form 8 submitted (Blob data - Navigation POST):');
-    console.log('Text field:', req.body.textfield);
-    if (req.file) {
-        console.log('Blob received:');
-        console.log('  - Original name:', req.file.originalname);
-        console.log('  - MIME type:', req.file.mimetype);
-        console.log('  - Size:', req.file.size, 'bytes');
-        console.log('  - Saved to:', req.file.path);
-    } else {
-        console.log('Blob: No blob data received');
-    }
-    
-    // Respond with a redirect (this triggers the bug - Payload tab disappears)
-    // This is a navigation POST request, so redirect happens in same request/response
-    res.redirect('/success?form=8');
-});
-
-// Route for form 9 - handles File object data via navigation POST and redirects
-app.post('/submit9', upload.single('filedata'), (req, res) => {
-    console.log('Form 9 submitted (File object data - Navigation POST):');
-    console.log('Text field:', req.body.textfield);
-    if (req.file) {
-        console.log('File received:');
-        console.log('  - Original name:', req.file.originalname);
-        console.log('  - MIME type:', req.file.mimetype);
-        console.log('  - Size:', req.file.size, 'bytes');
-        console.log('  - Saved to:', req.file.path);
-    } else {
-        console.log('File: No file data received');
-    }
-    
-    // Respond with a redirect (this triggers the bug - Payload tab disappears)
-    // This is a navigation POST request, so redirect happens in same request/response
-    res.redirect('/success?form=9');
+    // Respond with a redirect (this triggers the bug)
+    res.redirect('/success?form=6');
 });
 
 // Success page
@@ -223,22 +117,19 @@ app.get('/success', (req, res) => {
                 <p><strong>Check DevTools Network tab:</strong> The Payload tab should be missing or incomplete!</p>
             </div>
             <p>
-                <a href="/form.html">Test Form 1</a> | 
-                <a href="/form2.html">Test Form 2</a> |
-                <a href="/form3.html">Test Form 3 (Blob)</a> |
-                <a href="/form4.html">Test Form 4 (File)</a> |
-                <a href="/form5.html">Test Form 5 (DataTransfer)</a> |
-                <a href="/form6.html">Test Form 6 (Blob - No Redirect)</a> |
-                <a href="/form7.html">Test Form 7 (File - No Redirect)</a> |
-                <a href="/form8.html">Test Form 8 (Blob - Nav POST)</a> |
-                <a href="/form9.html">Test Form 9 (File - Nav POST)</a>
+                <a href="/form1.html">Form 1</a> | 
+                <a href="/form2.html">Form 2</a> |
+                <a href="/form3.html">Form 3</a> |
+                <a href="/form4.html">Form 4</a> |
+                <a href="/form5.html">Form 5</a> |
+                <a href="/form6.html">Form 6</a>
             </p>
         </body>
         </html>
     `);
 });
 
-// Root route - redirect to form 1
+// Root route
 app.get('/', (req, res) => {
     res.send(`
         <!DOCTYPE html>
@@ -248,7 +139,7 @@ app.get('/', (req, res) => {
             <style>
                 body {
                     font-family: Arial, sans-serif;
-                    max-width: 800px;
+                    max-width: 900px;
                     margin: 50px auto;
                     padding: 20px;
                 }
@@ -258,6 +149,12 @@ app.get('/', (req, res) => {
                     margin: 20px 0;
                     border-radius: 8px;
                     border: 1px solid #ddd;
+                }
+                .renderer {
+                    border-left: 4px solid #ffc107;
+                }
+                .browser {
+                    border-left: 4px solid #28a745;
                 }
                 a {
                     display: inline-block;
@@ -273,6 +170,23 @@ app.get('/', (req, res) => {
                 }
                 h2 {
                     color: #333;
+                    margin-top: 0;
+                }
+                .badge {
+                    display: inline-block;
+                    padding: 3px 8px;
+                    border-radius: 3px;
+                    font-size: 12px;
+                    font-weight: bold;
+                    margin-left: 10px;
+                }
+                .badge-renderer {
+                    background: #ffc107;
+                    color: #000;
+                }
+                .badge-browser {
+                    background: #28a745;
+                    color: #fff;
                 }
             </style>
         </head>
@@ -281,62 +195,48 @@ app.get('/', (req, res) => {
             <p>This test reproduces a Chrome DevTools bug where the Payload tab is missing or incomplete when:</p>
             <ul>
                 <li>Form has <code>enctype="multipart/form-data"</code></li>
-                <li>Form has a file input and a file is selected</li>
+                <li>Form sends file/blob data</li>
                 <li>Server responds with a redirect</li>
             </ul>
+            <p><strong>Key Difference:</strong> Navigation POST requests are observed by the browser process, while fetch/XHR requests are handled in the renderer process.</p>
             
-            <div class="card">
-                <h2>Form 1</h2>
-                <p>Payload tab shows Query String Parameters but not the actual payload</p>
-                <a href="/form.html">Test Form 1</a>
+            <h2>kData Only (Text Data)</h2>
+            <div class="card renderer">
+                <h2>Form 1: kData Only - Renderer Process <span class="badge badge-renderer">fetch/XHR</span></h2>
+                <p>Sends only text data via fetch(). Redirect handled in renderer process as separate GET request.</p>
+                <a href="/form1.html">Test Form 1</a>
             </div>
             
-            <div class="card">
-                <h2>Form 2</h2>
-                <p>Payload tab is MISSING ENTIRELY</p>
+            <div class="card browser">
+                <h2>Form 2: kData Only - Browser Process <span class="badge badge-browser">Navigation POST</span></h2>
+                <p>Sends only text data via normal form submission. Observed by browser process, redirect in same request/response.</p>
                 <a href="/form2.html">Test Form 2</a>
             </div>
             
-            <div class="card">
-                <h2>Form 3 (Blob Data)</h2>
-                <p>Tests with blob data sent via FormData (not file input)</p>
+            <h2>kData + kFile (Text + File Input)</h2>
+            <div class="card renderer">
+                <h2>Form 3: kData + kFile - Renderer Process <span class="badge badge-renderer">fetch/XHR</span></h2>
+                <p>Sends text data + file input via fetch(). Redirect handled in renderer process as separate GET request.</p>
                 <a href="/form3.html">Test Form 3</a>
             </div>
             
-            <div class="card">
-                <h2>Form 4 (File Object)</h2>
-                <p>Tests with File object (extends Blob) sent via FormData</p>
+            <div class="card browser">
+                <h2>Form 4: kData + kFile - Browser Process <span class="badge badge-browser">Navigation POST</span></h2>
+                <p>Sends text data + file input via normal form submission. Observed by browser process, redirect in same request/response.</p>
                 <a href="/form4.html">Test Form 4</a>
             </div>
             
-            <div class="card">
-                <h2>Form 5 (DataTransfer/FileList)</h2>
-                <p>Tests with FileList created via DataTransfer API and set on file input</p>
+            <h2>kData + kFile + Blob (Text + File Input + Blob)</h2>
+            <div class="card renderer">
+                <h2>Form 5: kData + kFile + Blob - Renderer Process <span class="badge badge-renderer">fetch/XHR</span></h2>
+                <p>Sends text data + file input + blob data via fetch(). Redirect handled in renderer process as separate GET request.</p>
                 <a href="/form5.html">Test Form 5</a>
             </div>
             
-            <div class="card" style="border: 2px solid #28a745;">
-                <h2>Form 6 (Blob - No Redirect) ✅</h2>
-                <p>Tests with blob data but NO redirect - Payload tab should be visible</p>
+            <div class="card browser">
+                <h2>Form 6: kData + kFile + Blob - Browser Process <span class="badge badge-browser">Navigation POST</span></h2>
+                <p>Sends text data + file input + blob data via normal form submission. Observed by browser process, redirect in same request/response.</p>
                 <a href="/form6.html">Test Form 6</a>
-            </div>
-            
-            <div class="card" style="border: 2px solid #28a745;">
-                <h2>Form 7 (File - No Redirect) ✅</h2>
-                <p>Tests with File object but NO redirect - Payload tab should be visible</p>
-                <a href="/form7.html">Test Form 7</a>
-            </div>
-            
-            <div class="card" style="border: 2px solid #dc3545;">
-                <h2>Form 8 (Blob - Navigation POST) 🚀</h2>
-                <p>Navigation POST request (not fetch/XHR) - sends data and redirects in same request</p>
-                <a href="/form8.html">Test Form 8</a>
-            </div>
-            
-            <div class="card" style="border: 2px solid #dc3545;">
-                <h2>Form 9 (File - Navigation POST) 🚀</h2>
-                <p>Navigation POST request (not fetch/XHR) - sends data and redirects in same request</p>
-                <a href="/form9.html">Test Form 9</a>
             </div>
         </body>
         </html>
@@ -345,21 +245,18 @@ app.get('/', (req, res) => {
 
 app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
-    console.log(`\nTest pages (WITH REDIRECT - triggers bug):`);
-    console.log(`  Form 1: http://localhost:${PORT}/form.html`);
-    console.log(`  Form 2: http://localhost:${PORT}/form2.html`);
-    console.log(`  Form 3 (Blob - fetch/XHR): http://localhost:${PORT}/form3.html`);
-    console.log(`  Form 4 (File - fetch/XHR): http://localhost:${PORT}/form4.html`);
-    console.log(`  Form 5 (DataTransfer - fetch/XHR): http://localhost:${PORT}/form5.html`);
-    console.log(`  Form 8 (Blob - Navigation POST): http://localhost:${PORT}/form8.html`);
-    console.log(`  Form 9 (File - Navigation POST): http://localhost:${PORT}/form9.html`);
-    console.log(`\nTest pages (NO REDIRECT - for comparison):`);
-    console.log(`  Form 6 (Blob - No Redirect): http://localhost:${PORT}/form6.html`);
-    console.log(`  Form 7 (File - No Redirect): http://localhost:${PORT}/form7.html`);
+    console.log(`\nForms (Renderer Process - fetch/XHR):`);
+    console.log(`  Form 1 (kData only): http://localhost:${PORT}/form1.html`);
+    console.log(`  Form 3 (kData + kFile): http://localhost:${PORT}/form3.html`);
+    console.log(`  Form 5 (kData + kFile + Blob): http://localhost:${PORT}/form5.html`);
+    console.log(`\nForms (Browser Process - Navigation POST):`);
+    console.log(`  Form 2 (kData only): http://localhost:${PORT}/form2.html`);
+    console.log(`  Form 4 (kData + kFile): http://localhost:${PORT}/form4.html`);
+    console.log(`  Form 6 (kData + kFile + Blob): http://localhost:${PORT}/form6.html`);
     console.log(`\nMake sure to:`);
     console.log(`  1. Open Chrome DevTools`);
     console.log(`  2. Go to Network tab`);
     console.log(`  3. Clear the network log`);
-    console.log(`  4. Submit a form with a file`);
+    console.log(`  4. Submit a form`);
     console.log(`  5. Check the Payload tab - it should be missing or incomplete!`);
 });

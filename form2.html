@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chrome DevTools Bug Test - Form 2</title>
+    <title>Form 2: kData Only - Browser Process (Navigation POST)</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -27,9 +27,6 @@
             margin-bottom: 15px;
             box-sizing: border-box;
         }
-        input[type="file"] {
-            margin-bottom: 15px;
-        }
         button {
             background: #007bff;
             color: white;
@@ -42,48 +39,26 @@
         button:hover {
             background: #0056b3;
         }
-        .instructions {
-            background: #fff3cd;
-            border: 1px solid #ffc107;
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
             padding: 15px;
             border-radius: 4px;
             margin-bottom: 20px;
-        }
-        .warning {
-            background: #f8d7da;
-            border: 1px solid #f5c6cb;
-            padding: 15px;
-            border-radius: 4px;
-            margin-bottom: 20px;
-            color: #721c24;
         }
     </style>
 </head>
 <body>
-    <h1>Chrome DevTools Bug Test - Form 2</h1>
+    <h1>Form 2: kData Only - Browser Process</h1>
     
-    <div class="instructions">
-        <h3>Steps to reproduce:</h3>
-        <ol>
-            <li>Open DevTools and open the Network tab. Clear it</li>
-            <li>Enter something into the text field below</li>
-            <li>Click "Choose file" and select a file to upload</li>
-            <li>Click Submit</li>
-            <li>In the Network tab of the DevTools, select the first request. Check the Payload tab</li>
-            <li><strong>Expected Bug:</strong> The Payload tab is MISSING ENTIRELY!</li>
-        </ol>
-    </div>
-
-    <div class="warning">
-        <strong>⚠️ Critical Bug:</strong> This form demonstrates the most severe case where the Payload tab disappears completely when the server responds with a redirect after a multipart/form-data POST with file upload.
+    <div class="info">
+        <strong>Browser Process (Navigation POST)</strong><br>
+        Sends only text data (kData) via normal form submission. Observed by browser process, redirect in same request/response.
     </div>
 
     <form action="/submit2" method="POST" enctype="multipart/form-data">
         <label for="textfield">Text Field:</label>
         <input type="text" id="textfield" name="textfield" placeholder="Enter some text" required>
-        
-        <label for="file">File Upload:</label>
-        <input type="file" id="file" name="file" required>
         
         <button type="submit">Submit</button>
     </form>
