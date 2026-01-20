@@ -12,7 +12,8 @@ const upload = multer({ dest: 'uploads/' });
 app.use(express.static(__dirname));
 
 // Form 1: kData only - Renderer Process (fetch/XHR)
-app.post('/submit1', (req, res) => {
+// Uses multer.none() to parse multipart/form-data without files
+app.post('/submit1', multer().none(), (req, res) => {
     console.log('Form 1 submitted (kData only - Renderer/fetch/XHR):');
     console.log('Text field:', req.body.textfield);
     
@@ -21,7 +22,8 @@ app.post('/submit1', (req, res) => {
 });
 
 // Form 2: kData only - Browser Process (Navigation POST)
-app.post('/submit2', (req, res) => {
+// Uses multer.none() to parse multipart/form-data without files
+app.post('/submit2', multer().none(), (req, res) => {
     console.log('Form 2 submitted (kData only - Browser/Navigation POST):');
     console.log('Text field:', req.body.textfield);
     
